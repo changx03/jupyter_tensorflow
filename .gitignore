@@ -42,4 +42,5 @@ config.rst
 package-lock.json
 geckodriver.log
 *.iml
-.vscode/settings.json
+
+.vscode/

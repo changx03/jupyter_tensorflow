@@ -850,3 +850,6 @@ pred_after_ad = model.predict(x_passed_s3)
 
 score = accuracy_score(y_passed_s3, pred_after_ad)
 print(f'Accuracy on the given set = {score*100:.4f}%')
+
+
+# %%

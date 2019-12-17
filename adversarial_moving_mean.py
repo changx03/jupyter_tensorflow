@@ -226,11 +226,13 @@ for xx, ae, p, p_ae, yy_ae in zip(
         pred_ae, 
         y_ae):
     if p != p_ae:
-        print(f'from [{xx[0]: .4f}, {xx[1]: .4f}] = {p} to [{ae[0]: .4f}, {ae[1]: .4f}] = {p_ae}; True y = {yy_ae}')
+        print(f'from [{xx[0]: .4f}, {xx[1]: .4f}] = {p} to ' +
+        f'[{ae[0]: .4f}, {ae[1]: .4f}] = {p_ae}; True y = {yy_ae}')
 
 matches = np.equal(y_ae, pred)
 count = len(matches[matches==False])
-print(f'\nFound {count} Adversarial Examples out of {len(y_ae)}. {count / len(y_ae) * 100.0:.4f}% successful rate')
+print(f'\nFound {count} Adversarial Examples out of ' +
+    f'{len(y_ae)}. {count / len(y_ae) * 100.0:.4f}% successful rate')
 
 # %%
 xx, yy = np.meshgrid(np.arange(x_min, x_max, h), np.arange(x_min, x_max, h))

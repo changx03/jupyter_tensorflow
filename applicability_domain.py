@@ -63,7 +63,7 @@ def check_reliability(
         Array of row vectors.
     
     predictions: array
-        Array of predicted labelsfor inputs.
+        Array of predicted labels for inputs.
     
     models: array of sklearn.neighbors.KNeighborsClassifier
         Array of kNN models. Each class should have its own model.

@@ -176,7 +176,7 @@ plt.show()
 
 # %%
 # Apply Applicability Domain
-# Use only the misclassified samples from previous step
+# Use the adversarial examples from previous step
 x_ae = adversarial_examples
 y_ae = and_gen.get_y(x_ae)
 pred_ae = pred_ae = model_svm.predict(x_ae)
@@ -196,12 +196,12 @@ print(f'Pass rate = {pass_rate * 100:.4f}%')
 # print('Blocked by Applicability Domain:')
 # utils.print_blocked_samples(x_ae, ind_passed_s1)
 
-
+# %%
 # State 2 - Reliability
 print('\n---------- Reliability -----------------')
 # Parameters:
 k = 9
-zeta = 1.959
+zeta = 1.2
 
 # Creating kNN models for each class
 ind_train_c1 = np.where(y_train == 1)
@@ -224,7 +224,8 @@ x_passed_s2, ind_passed_s2 = ad.check_reliability(
     predictions=pred_passed_s1,
     models=[model_knn_c0, model_knn_c1],
     dist_thresholds=[threshold_c0, threshold_c1],
-    classes=[0, 1]
+    classes=[0, 1],
+    verbose=1
 )
 pred_passed_s2 = pred_passed_s1[ind_passed_s2]
 
@@ -244,6 +245,7 @@ print(f'Pass rate = {pass_rate * 100:.4f}%')
 # print('Blocked by Reliability Domain:')
 # utils.print_blocked_samples(x_passed_s1, ind_passed_s2)
 
+# %%
 # Stage 3 - Decidability
 print('\n---------- Decidability ----------------')
 model_knn = knn.KNeighborsClassifier(
@@ -262,6 +264,10 @@ print(f'Pass rate = {pass_rate * 100:.4f}%')
 
 # %%
 # Results
+score = accuracy_score(y_ae, pred_ae)
+print(f'Accuracy before AD = {score*100:.4f}%')
+print()
+
 pass_rate = utils.get_rate(x_passed_s3, x_ae)
 y_passed = and_gen.get_y(x_passed_s3)
 pred_after_ad = model_svm.predict(x_passed_s3)
@@ -270,7 +276,7 @@ matches = np.equal(y_passed, pred_after_ad)
 ind_misclassified = np.where(matches == False)[0]
 
 print(f'\nOverall pass rate = {pass_rate * 100:.4f}%')
-print(f'Accuracy on the given set = {score*100:.4f}%')
+print(f'Accuracy after AD = {score*100:.4f}%')
 print(f'{len(x_passed_s3)} out of {len(x_ae)}')
 print(f'Misclassified = {len(ind_misclassified)}')
 print()
@@ -280,5 +286,6 @@ for i in ind_misclassified:
         f'[{adversarial_examples[i][0]: .4f}, ' 
         + f'{adversarial_examples[i][1]: .4f}] = {pred_after_ad[i]};'
         + f' True y = {y_passed[i]}')
+
 # %%
 

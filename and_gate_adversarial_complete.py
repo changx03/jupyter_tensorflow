@@ -288,4 +288,18 @@ for i in ind_misclassified:
         + f' True y = {y_passed[i]}')
 
 # %%
+xx, yy = np.meshgrid(np.arange(x_min, x_max, h), np.arange(x_min, x_max, h))
+Z = model_svm.predict(np.c_[xx.ravel(), yy.ravel()])
+Z = Z.reshape(xx.shape)
 
+plt.figure(figsize=figsize.tolist())
+plt.contourf(xx, yy, Z, cmap='coolwarm', alpha=0.6)
+plt.scatter(
+    x_passed_s3[:, 0], x_passed_s3[:, 1], 
+    c=y_passed, marker='.', alpha=0.8, cmap='coolwarm', s=8, edgecolor='face')
+plt.xlim(x_min, x_max)
+plt.ylim(x_min, x_max)
+plt.show()
+
+
+# %%

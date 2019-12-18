@@ -107,3 +107,9 @@ def get_rate(numerator, denominator):
     if len(denominator) <= len(numerator):
         return 1.0
     return len(numerator) / float(len(denominator))
+
+# %%
+def print_blocked_samples(x, ind_passed):
+    ind_blocked = get_filtered_indices(x, ind_passed)
+    for x_i in x[ind_blocked]:
+        print(f'[{x_i[0]: .4f}, {x_i[1]: .4f}]')

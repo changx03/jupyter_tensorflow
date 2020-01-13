@@ -27,8 +27,7 @@ n = 2000
 x, y = and_gen.generate_uniform_samples(
     n=n, 
     threshold=0, 
-    radius=1.0, 
-    random_state=random_state)
+    radius=1.0)
 x, x_norms = normalize(x, norm='l2', axis=0, return_norm=True)
 print(x_norms)
 

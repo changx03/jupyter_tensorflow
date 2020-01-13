@@ -23,7 +23,7 @@ np.random.seed(seed=random_state)
 
 # %%
 n = 1000
-x, y = and_gen.generate_logistic_samples(1000, random_state=random_state)
+x, y = and_gen.generate_logistic_samples(1000)
 
 # %%
 # Increasing the size of the plots

@@ -44,16 +44,13 @@ for centre in centres:
     y = np.append(y, temp_y)
 
 x = x - 0.5
-x, x_norms = normalize(x, norm='l2', axis=0, return_norm=True)
-print('Norms:')
-print(x_norms)
 
 # %%
 # Increasing the size of the plots
 figsize = np.array(plt.rcParams["figure.figsize"]) * 2
-
-x_max = np.amax(x, axis=0) + 0.01
-x_min = np.amin(x, axis=0) - 0.01
+# by symmetry x and y axis should be in same range
+x_max = np.amax(x, axis=0) * 1.2
+x_min = np.amin(x, axis=0) * 1.2
 
 plt.figure(figsize=figsize.tolist())
 plt.scatter(
@@ -65,8 +62,8 @@ plt.ylim(x_min[1], x_max[1])
 plt.show()
 
 # %%
-# 60:40 split on training and test sets
-x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.4)
+# 80:20 split on training and test sets
+x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.2)
 
 # %%
 # Prediction model
@@ -91,14 +88,11 @@ print(f'Accuracy on test set  = {score_test*100:.4f}%')
 
 # %%
 # Sanity check
-x_basis, y_basis = and_gen.get_basic_set(shift=[[-0.5, -0.5]], norms=[x_norms])
+x_basis, y_basis = and_gen.get_basic_set(shift=[[-0.5, -0.5]])
 utils.run_basic_test(x_basis, y_basis, model_svm)
 
 # %%
-h = .001
-# by symmetry x and y axis should be in same range
-x_max = np.amax(x_test, axis=0) + 0.01
-x_min = np.amin(x_test, axis=0) - 0.01
+h = .01
 
 xx, yy = np.meshgrid(
     np.arange(x_min[0], x_max[0], h), 

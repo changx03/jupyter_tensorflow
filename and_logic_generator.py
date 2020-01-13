@@ -137,8 +137,12 @@ def generate_uniform_samples(n=1000, threshold=0.5, radius=1.0, random_state=Non
     x = x.reshape((n, 2))
     y = get_y(x, threshold)
     return x, y
+
 # %%
 def get_basic_set(shift=None, norms=None):
+    """
+    Adjusting 4 base cases based on shifting and normalization
+    """
     x = np.array([
         [0, 0],
         [1, 0],
@@ -153,6 +157,3 @@ def get_basic_set(shift=None, norms=None):
         x = x / np.repeat(norms, len(x), axis=0)
 
     return x, y
-
-
-# %%

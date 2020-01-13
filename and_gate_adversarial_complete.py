@@ -22,8 +22,8 @@ random_state = 2**12
 np.random.seed(seed=random_state)
 
 # %%
-n = 1000
-x, y = and_gen.generate_logistic_samples(1000)
+n = 2000
+x, y = and_gen.generate_logistic_samples(n)
 
 # %%
 # Increasing the size of the plots
@@ -42,7 +42,7 @@ plt.show()
 
 # %%
 # 80:20 split on training and test sets
-x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.20)
+x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.2)
 
 # %%
 # Prediction model
@@ -67,10 +67,8 @@ print(f'Accuracy on test set  = {score_test*100:.4f}%')
 
 # %%
 # Sanity check
-print(model_svm.predict([[1., 1.]]))
-print(model_svm.predict([[1., 0.]]))
-print(model_svm.predict([[0., 1.]]))
-print(model_svm.predict([[0., 0.]]))
+x_basis, y_basis = and_gen.get_basic_set()
+utils.run_basic_test(x_basis, y_basis, model_svm)
 
 # %%
 h = .01
@@ -201,23 +199,24 @@ print(f'Pass rate = {pass_rate * 100:.4f}%')
 print('\n---------- Reliability -----------------')
 # Parameters:
 k = 9
-zeta = 1.2
+# The test mean and training mean are close, thus using smaller zeta
+zeta = 0.3
 
 # Creating kNN models for each class
-ind_train_c1 = np.where(y_train == 1)
-model_knn_c1 = utils.unimodal_knn(x_train[ind_train_c1], k)
-
 ind_train_c0 = np.where(y_train == 0)
 model_knn_c0 = utils.unimodal_knn(x_train[ind_train_c0], k)
 
-# Computing mean, standard deviation and threshold
-mu_c1, sd_c1 = utils.get_distance_info(
-    model_knn_c1, x_train[ind_train_c1], k, seen_in_train_set=True)
-threshold_c1 = ad.get_reliability_threshold(mu_c1, sd_c1, zeta)
+ind_train_c1 = np.where(y_train == 1)
+model_knn_c1 = utils.unimodal_knn(x_train[ind_train_c1], k)
 
+# Computing mean, standard deviation and threshold
 mu_c0, sd_c0 = utils.get_distance_info(
     model_knn_c0, x_train[ind_train_c0], k, seen_in_train_set=True)
 threshold_c0 = ad.get_reliability_threshold(mu_c0, sd_c0, zeta)
+
+mu_c1, sd_c1 = utils.get_distance_info(
+    model_knn_c1, x_train[ind_train_c1], k, seen_in_train_set=True)
+threshold_c1 = ad.get_reliability_threshold(mu_c1, sd_c1, zeta)
 
 x_passed_s2, ind_passed_s2 = ad.check_reliability(
     x_passed_s1,
@@ -230,15 +229,15 @@ x_passed_s2, ind_passed_s2 = ad.check_reliability(
 pred_passed_s2 = pred_passed_s1[ind_passed_s2]
 
 # Print
-print('Distance of c1 in training set:')
-print('{:18s} = {:.4f}'.format('Mean', mu_c1))
-print('{:18s} = {:.4f}'.format('Standard deviation', sd_c1))
-print('{:18s} = {:.4f}\n'.format('Threshold', threshold_c1))
-
 print('Distance of c0 in training set:')
 print('{:18s} = {:.4f}'.format('Mean', mu_c0))
 print('{:18s} = {:.4f}'.format('Standard deviation', sd_c0))
 print('{:18s} = {:.4f}\n'.format('Threshold', threshold_c0))
+
+print('Distance of c1 in training set:')
+print('{:18s} = {:.4f}'.format('Mean', mu_c1))
+print('{:18s} = {:.4f}'.format('Standard deviation', sd_c1))
+print('{:18s} = {:.4f}\n'.format('Threshold', threshold_c1))
 
 pass_rate = utils.get_rate(x_passed_s2, x_passed_s1)
 print(f'Pass rate = {pass_rate * 100:.4f}%')

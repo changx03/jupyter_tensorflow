@@ -24,7 +24,7 @@ np.random.seed(seed=random_state)
 
 # %%
 n = 1000
-x, y = and_gen.generate_samples(1000, random_state=random_state)
+x, y = and_gen.generate_logistic_samples(1000, random_state=random_state)
 x = x - 0.5
 x, x_norms = normalize(x, norm='l2', axis=0, return_norm=True)
 print(x_norms)

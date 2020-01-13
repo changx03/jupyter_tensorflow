@@ -23,7 +23,7 @@ random_state = 2**12
 np.random.seed(seed=random_state)
 
 # %%
-n = 1000
+n = 2000
 x, y = and_gen.generate_uniform_samples(
     n=n, 
     threshold=0, 
@@ -50,7 +50,7 @@ plt.show()
 
 # %%
 # 80:20 split on training and test sets
-x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.20)
+x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.4)
 
 # %%
 # Prediction model
@@ -155,12 +155,16 @@ matches = np.equal(y_ae, pred_ae)
 ind_misclassified = np.where(matches == False)[0]
 
 # Print all misclassified samples
-for i in ind_misclassified:
-    print(
-        f'from [{x_test[i][0]: .4f}, {x_test[i][1]: .4f}] = {original_pred[i]}'
-        + f' to [{adversarial_examples[i][0]: .4f}, '
-        + f'{adversarial_examples[i][1]: .4f}] = {pred_ae[i]};'
-        + f' True y = {y_ae[i]}')
+# for i in ind_misclassified:
+#     print(
+#         f'from [{x_test[i][0]: .4f}, {x_test[i][1]: .4f}] = {original_pred[i]}'
+#         + f' to [{adversarial_examples[i][0]: .4f}, '
+#         + f'{adversarial_examples[i][1]: .4f}] = {pred_ae[i]};'
+#         + f' True y = {y_ae[i]}')
+
+y_miss = y_ae[ind_misclassified]
+print(f'Misclassified positive = {len(y_miss[y_miss==1])}')
+print(f'Misclassified negative = {len(y_miss[y_miss==0])}')
 
 
 count = len(matches[matches==False])
@@ -207,7 +211,7 @@ print(f'Pass rate = {pass_rate * 100:.4f}%')
 # utils.print_blocked_samples(x_ae, ind_passed_s1)
 
 # %%
-# State 2 - Reliability
+# Stage 2 - Reliability
 print('\n---------- Reliability -----------------')
 # Parameters:
 k = 9
@@ -235,7 +239,7 @@ x_passed_s2, ind_passed_s2 = ad.check_reliability(
     models=[model_knn_c0, model_knn_c1],
     dist_thresholds=[threshold_c0, threshold_c1],
     classes=[0, 1],
-    verbose=1
+    verbose=0
 )
 pred_passed_s2 = pred_passed_s1[ind_passed_s2]
 
@@ -289,13 +293,16 @@ print(f'\nOverall pass rate = {pass_rate * 100:.4f}%')
 print(f'Accuracy after AD = {score*100:.4f}%')
 print(f'{len(x_passed_s3)} out of {len(x_ae)}')
 print(f'Misclassified = {len(ind_misclassified)}')
+y_miss = y_passed[ind_misclassified]
+print(f'Misclassified positive = {len(y_miss[y_miss==1])}')
+print(f'Misclassified negative = {len(y_miss[y_miss==0])}')
 print()
 
-for i in ind_misclassified:
-    print(
-        f'[{adversarial_examples[i][0]: .4f}, ' 
-        + f'{adversarial_examples[i][1]: .4f}] = {pred_after_ad[i]};'
-        + f' True y = {y_passed[i]}')
+# for i in ind_misclassified:
+#     print(
+#         f'[{adversarial_examples[i][0]: .4f}, ' 
+#         + f'{adversarial_examples[i][1]: .4f}] = {pred_after_ad[i]};'
+#         + f' True y = {y_passed[i]}')
 
 # %%
 xx, yy = np.meshgrid(

@@ -441,7 +441,7 @@ print(f'Pass rate = {pass_rate_ad * 100:.4f}%')
 print('Blocked by Applicability Domain:')
 print_blocked_samples(x_new, ind_passed_s1)
 
-# State 2 - Reliability
+# Stage 2 - Reliability
 print('\n---------- Reliability -----------------')
 # Parameters:
 k = 9

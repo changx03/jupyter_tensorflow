@@ -1,4 +1,6 @@
 # %%
+# TODO: generating 4 blobs instead of 1.
+
 from tensorflow import keras
 import tensorflow as tf
 import numpy as np

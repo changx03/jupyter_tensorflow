@@ -197,7 +197,7 @@ print(f'Pass rate = {pass_rate * 100:.4f}%')
 # utils.print_blocked_samples(x_ae, ind_passed_s1)
 
 # %%
-# State 2 - Reliability
+# Stage 2 - Reliability
 print('\n---------- Reliability -----------------')
 # Parameters:
 k = 9

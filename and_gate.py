@@ -130,8 +130,9 @@ model_svm1.get_params()
 # %%
 gamma = 60.0
 C = 1000
-model_svm2 = svm.SVC(kernel='rbf', decision_function_shape='ovo',
-                     random_state=random_state, gamma=gamma, C=C)
+model_svm2 = svm.SVC(
+    kernel='rbf', decision_function_shape='ovo',
+    random_state=random_state, gamma=gamma, C=C)
 model_svm2.fit(x_train, y_train)
 
 # %%

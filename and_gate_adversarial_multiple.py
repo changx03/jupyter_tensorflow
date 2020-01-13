@@ -1,6 +1,4 @@
 # %%
-# TODO: generating 4 blobs instead of 1.
-
 from tensorflow import keras
 import tensorflow as tf
 import numpy as np
@@ -25,10 +23,29 @@ random_state = 2**12
 np.random.seed(seed=random_state)
 
 # %%
+# generating 4 blobs instead of 1.
 n = 2000
-x, y = and_gen.generate_logistic_samples(1000, random_state=random_state)
+centres = [
+    [0.25, 0.25],
+    [0.75, 0.25],
+    [0.25, 0.75],
+    [0.75, 0.75]]
+x = np.array([], dtype=np.float32)
+y = np.array([], dtype=np.int)
+for centre in centres:
+    temp_x, temp_y = and_gen.generate_logistic_samples(
+        n=int(n / len(centres)), threshold=0.5, centre=centre,
+        scale=0.05)
+    # numpy append func does NOT allow preallocate multi-dimensional array
+    if len(x) == 0:
+        x = temp_x
+    else:
+        x = np.append(x, temp_x, axis=0)
+    y = np.append(y, temp_y)
+
 x = x - 0.5
 x, x_norms = normalize(x, norm='l2', axis=0, return_norm=True)
+print('Norms:')
 print(x_norms)
 
 # %%
@@ -48,7 +65,7 @@ plt.ylim(x_min[1], x_max[1])
 plt.show()
 
 # %%
-# 80:20 split on training and test sets
+# 60:40 split on training and test sets
 x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.4)
 
 # %%
@@ -213,23 +230,26 @@ print(f'Pass rate = {pass_rate * 100:.4f}%')
 print('\n---------- Reliability -----------------')
 # Parameters:
 k = 9
-zeta = 1.2
+# Using a larger zeta value
+# zeta = 1.2
+zeta0 = 3.2
+zeta1 = 1.7
 
 # Creating kNN models for each class
-ind_train_c1 = np.where(y_train == 1)
-model_knn_c1 = utils.unimodal_knn(x_train[ind_train_c1], k)
-
 ind_train_c0 = np.where(y_train == 0)
 model_knn_c0 = utils.unimodal_knn(x_train[ind_train_c0], k)
 
-# Computing mean, standard deviation and threshold
-mu_c1, sd_c1 = utils.get_distance_info(
-    model_knn_c1, x_train[ind_train_c1], k, seen_in_train_set=True)
-threshold_c1 = ad.get_reliability_threshold(mu_c1, sd_c1, zeta)
+ind_train_c1 = np.where(y_train == 1)
+model_knn_c1 = utils.unimodal_knn(x_train[ind_train_c1], k)
 
+# Computing mean, standard deviation and threshold
 mu_c0, sd_c0 = utils.get_distance_info(
     model_knn_c0, x_train[ind_train_c0], k, seen_in_train_set=True)
-threshold_c0 = ad.get_reliability_threshold(mu_c0, sd_c0, zeta)
+threshold_c0 = ad.get_reliability_threshold(mu_c0, sd_c0, zeta0)
+
+mu_c1, sd_c1 = utils.get_distance_info(
+    model_knn_c1, x_train[ind_train_c1], k, seen_in_train_set=True)
+threshold_c1 = ad.get_reliability_threshold(mu_c1, sd_c1, zeta1)
 
 x_passed_s2, ind_passed_s2 = ad.check_reliability(
     x_passed_s1,
@@ -237,20 +257,20 @@ x_passed_s2, ind_passed_s2 = ad.check_reliability(
     models=[model_knn_c0, model_knn_c1],
     dist_thresholds=[threshold_c0, threshold_c1],
     classes=[0, 1],
-    verbose=0
+    verbose=1
 )
 pred_passed_s2 = pred_passed_s1[ind_passed_s2]
 
 # Print
-print('Distance of c1 in training set:')
-print('{:18s} = {:.4f}'.format('Mean', mu_c1))
-print('{:18s} = {:.4f}'.format('Standard deviation', sd_c1))
-print('{:18s} = {:.4f}\n'.format('Threshold', threshold_c1))
-
 print('Distance of c0 in training set:')
 print('{:18s} = {:.4f}'.format('Mean', mu_c0))
 print('{:18s} = {:.4f}'.format('Standard deviation', sd_c0))
 print('{:18s} = {:.4f}\n'.format('Threshold', threshold_c0))
+
+print('Distance of c1 in training set:')
+print('{:18s} = {:.4f}'.format('Mean', mu_c1))
+print('{:18s} = {:.4f}'.format('Standard deviation', sd_c1))
+print('{:18s} = {:.4f}\n'.format('Threshold', threshold_c1))
 
 pass_rate = utils.get_rate(x_passed_s2, x_passed_s1)
 print(f'Pass rate = {pass_rate * 100:.4f}%')
@@ -278,29 +298,31 @@ print(f'Pass rate = {pass_rate * 100:.4f}%')
 # Results
 score = accuracy_score(y_ae, pred_ae)
 print(f'Accuracy before AD = {score*100:.4f}%')
-print()
 
 pass_rate = utils.get_rate(x_passed_s3, x_ae)
-y_passed = and_gen.get_y(x_passed_s3)
-pred_after_ad = model_svm.predict(x_passed_s3)
-score = accuracy_score(y_passed, pred_after_ad)
-matches = np.equal(y_passed, pred_after_ad)
-ind_misclassified = np.where(matches == False)[0]
-
 print(f'\nOverall pass rate = {pass_rate * 100:.4f}%')
-print(f'Accuracy after AD = {score*100:.4f}%')
-print(f'{len(x_passed_s3)} out of {len(x_ae)}')
-print(f'Misclassified = {len(ind_misclassified)}')
-y_miss = y_passed[ind_misclassified]
-print(f'Misclassified positive = {len(y_miss[y_miss==1])}')
-print(f'Misclassified negative = {len(y_miss[y_miss==0])}')
+
+if len(x_passed_s3) is not 0:
+    y_passed = and_gen.get_y(x_passed_s3)
+    pred_after_ad = model_svm.predict(x_passed_s3)
+    score = accuracy_score(y_passed, pred_after_ad)
+    matches = np.equal(y_passed, pred_after_ad)
+    ind_misclassified = np.where(matches == False)[0]
+
+    print(f'Accuracy after AD = {score*100:.4f}%')
+    print(f'{len(x_passed_s3)} out of {len(x_ae)}')
+    print(f'Misclassified = {len(ind_misclassified)}')
+    y_miss = y_passed[ind_misclassified]
+    print(f'Misclassified positive = {len(y_miss[y_miss==1])}')
+    print(f'Misclassified negative = {len(y_miss[y_miss==0])}')
 print()
 
-# for i in ind_misclassified:
-#     print(
-#         f'[{adversarial_examples[i][0]: .4f}, ' 
-#         + f'{adversarial_examples[i][1]: .4f}] = {pred_after_ad[i]};'
-#         + f' True y = {y_passed[i]}')
+# %%
+for i in ind_misclassified:
+    print(
+        f'[{adversarial_examples[i][0]: .4f}, ' 
+        + f'{adversarial_examples[i][1]: .4f}] = {pred_after_ad[i]};'
+        + f' True y = {y_passed[i]}')
 
 # %%
 xx, yy = np.meshgrid(
@@ -317,6 +339,5 @@ plt.scatter(
 plt.xlim(x_min[0], x_max[0])
 plt.ylim(x_min[1], x_max[1])
 plt.show()
-
 
 # %%

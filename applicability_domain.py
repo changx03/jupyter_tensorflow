@@ -32,6 +32,11 @@ def check_applicability(inputs, x_train, y_train, classes=[0,1]):
     input_indices: array
         Array of original indices.
     """
+
+    if len(inputs) == 0:
+        print('No sample has passed into this stage.')
+        return inputs, np.array([])
+
     # the input only need to within one of the classes
     idx_set = set()
     
@@ -95,6 +100,10 @@ def check_reliability(
     
     if len(inputs) != len(predictions):
         raise Exception('inputs and predictions must have same length.')
+
+    if len(inputs) == 0:
+        print('No sample has passed into this stage.')
+        return inputs, np.array([])
     
     passed_ind = set()
     # placeholder for indices of inputs
@@ -111,13 +120,14 @@ def check_reliability(
         if verbose == 1:
             print(f'\nIn {c} class:')
             print(f'Threshold = {threshold:.4f}')
-            for x, dist in zip(inputs[inclass_ind], mu):
-                print(f'[{x[0]: .4f}, {x[1]: .4f}] mean = {dist:.4f}')
+            print(f'Average mean = {np.mean(mu):.4f}')
+            # for x, dist in zip(inputs[inclass_ind], mu):
+            #     print(f'[{x[0]: .4f}, {x[1]: .4f}] mean = {dist:.4f}')
             print('Passed indices:')
             print(*passed_sub_ind, sep=', ')
     
     # convert from set to array
-    passed_ind = np.array(list(passed_ind))
+    passed_ind = np.array(list(passed_ind), dtype=np.int)
     return inputs[passed_ind], passed_ind
 
 # %%
@@ -150,6 +160,10 @@ def check_decidability(inputs, predictions, knn_model, verbose=0):
     """
     if len(inputs) != len(predictions):
         raise Exception('inputs and predictions must have same length.')
+
+    if len(inputs) == 0:
+        print('No sample has passed into this stage.')
+        return inputs, np.array([])
 
     pred_knn = knn_model.predict(inputs)
     ind_match = np.where(np.equal(predictions, pred_knn))

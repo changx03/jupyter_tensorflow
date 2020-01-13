@@ -77,3 +77,23 @@ def generate_samples(n=1000, threshold=0.5, scale=0.15, random_state=None):
     x = x.reshape((n, 2))
     y = get_y(x, threshold)
     return x, y
+
+# %%
+def get_basic_set(shift=None, norms=None):
+    x = np.array([
+        [0, 0],
+        [1, 0],
+        [0, 1],
+        [1, 1]], dtype=np.float32)
+    y = get_y(x)
+
+    if shift is not None:
+        x = x + np.repeat(shift, len(x), axis=0)
+    
+    if norms is not None:
+        x = x / np.repeat(norms, len(x), axis=0)
+
+    return x, y
+
+
+# %%

@@ -1,6 +1,7 @@
 # %%
 import numpy as np
 import sklearn.neighbors as knn
+from sklearn.metrics import accuracy_score
 
 # %%
 def get_filtered_indices(inputs, passed_ind):
@@ -113,3 +114,14 @@ def print_blocked_samples(x, ind_passed):
     ind_blocked = get_filtered_indices(x, ind_passed)
     for x_i in x[ind_blocked]:
         print(f'[{x_i[0]: .4f}, {x_i[1]: .4f}]')
+
+# %%
+def run_basic_test(x, y, model):
+    pred = model.predict(x)
+    score_basis = accuracy_score(y, pred)
+    if score_basis == 1.0:
+        print('Pass basic test')
+    else:
+        print('Failed basic test')
+        for xx, yy in zip(x, pred):
+            print(f'[{xx[0]: .4f}, {xx[1]: .4f}] = {yy}')

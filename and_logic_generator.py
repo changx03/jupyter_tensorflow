@@ -148,7 +148,7 @@ def get_basic_set(shift=None, norms=None):
         [1, 0],
         [0, 1],
         [1, 1]], dtype=np.float32)
-    y = get_y(x)
+    y = get_y(x, threshold=0.5)
 
     if shift is not None:
         x = x + np.repeat(shift, len(x), axis=0)

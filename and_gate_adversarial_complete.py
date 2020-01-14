@@ -145,13 +145,16 @@ matches = np.equal(y_ae, pred_ae)
 ind_misclassified = np.where(matches == False)[0]
 
 # Print all misclassified samples
-for i in ind_misclassified:
-    print(
-        f'from [{x_test[i][0]: .4f}, {x_test[i][1]: .4f}] = {original_pred[i]}'
-        + f' to [{adversarial_examples[i][0]: .4f}, '
-        + f'{adversarial_examples[i][1]: .4f}] = {pred_ae[i]};'
-        + f' True y = {y_ae[i]}')
+# for i in ind_misclassified:
+#     print(
+#         f'from [{x_test[i][0]: .4f}, {x_test[i][1]: .4f}] = {original_pred[i]}'
+#         + f' to [{adversarial_examples[i][0]: .4f}, '
+#         + f'{adversarial_examples[i][1]: .4f}] = {pred_ae[i]};'
+#         + f' True y = {y_ae[i]}')
 
+y_miss = y_ae[ind_misclassified]
+print(f'Misclassified positive = {len(y_miss[y_miss==1])}')
+print(f'Misclassified negative = {len(y_miss[y_miss==0])}')
 
 count = len(matches[matches==False])
 print(f'\nFound {len(ind_misclassified)} Adversarial Examples out of ' 
@@ -278,13 +281,15 @@ print(f'\nOverall pass rate = {pass_rate * 100:.4f}%')
 print(f'Accuracy after AD = {score*100:.4f}%')
 print(f'{len(x_passed_s3)} out of {len(x_ae)}')
 print(f'Misclassified = {len(ind_misclassified)}')
+print(f'Misclassified positive = {len(y_miss[y_miss==1])}')
+print(f'Misclassified negative = {len(y_miss[y_miss==0])}')
 print()
 
-for i in ind_misclassified:
-    print(
-        f'[{adversarial_examples[i][0]: .4f}, ' 
-        + f'{adversarial_examples[i][1]: .4f}] = {pred_after_ad[i]};'
-        + f' True y = {y_passed[i]}')
+# for i in ind_misclassified:
+#     print(
+#         f'[{adversarial_examples[i][0]: .4f}, ' 
+#         + f'{adversarial_examples[i][1]: .4f}] = {pred_after_ad[i]};'
+#         + f' True y = {y_passed[i]}')
 
 # %%
 xx, yy = np.meshgrid(np.arange(x_min, x_max, h), np.arange(x_min, x_max, h))

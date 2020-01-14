@@ -120,7 +120,7 @@ def run_basic_test(x, y, model):
     pred = model.predict(x)
     score_basis = accuracy_score(y, pred)
     if score_basis == 1.0:
-        print('Pass basic test')
+        print('Passed basic test')
     else:
         print('Failed basic test')
         for xx, yy in zip(x, pred):

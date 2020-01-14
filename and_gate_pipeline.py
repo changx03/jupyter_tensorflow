@@ -12,12 +12,6 @@ import utils
 import applicability_domain as ad
 import adversarial_generator as adversarial
 
-# reload modules every 2 seconds
-%load_ext autoreload
-%autoreload 2
-
-# %%
-
 
 class AndGatePipeline:
     def __init__(self, x, y, random_state=None):
@@ -73,7 +67,7 @@ class AndGatePipeline:
     def train_test_split(self, test_size=0.2):
         print(f'Train test split: {(1-test_size):.2f}:{test_size:.2f}')
         x_train, x_test, y_train, y_test = train_test_split(
-            x, y, test_size=test_size)
+            self.x, self.y, test_size=test_size)
         self.x_train = x_train
         self.x_test = x_test
         self.y_train = y_train
@@ -122,12 +116,12 @@ class AndGatePipeline:
     def generate_adversarial_examples(self, epsilon):
         ind_train_c0 = np.where(self.y_train == 0)
         x_train_c0 = self.x_train[ind_train_c0]
-        y_train_c0 = np.zeros(len(x_train_c0))
+        # y_train_c0 = np.zeros(len(x_train_c0))
         mu_train_c0 = np.mean(x_train_c0, axis=0)
 
         ind_train_c1 = np.where(self.y_train == 1)
         x_train_c1 = self.x_train[ind_train_c1]
-        y_train_c1 = np.ones(len(x_train_c1))
+        # y_train_c1 = np.ones(len(x_train_c1))
         mu_train_c1 = np.mean(x_train_c1, axis=0)
 
         print(f'Negative mean = [{mu_train_c0[0]:.4f}, {mu_train_c0[1]:.4f}]')
@@ -153,7 +147,7 @@ class AndGatePipeline:
         print(f'Completed after {epoch} epoch...')
         self.adversarial_examples = adversarial_examples
 
-        original_pred = self.model.predict(self.x_test)
+        # original_pred = self.model.predict(self.x_test)
         self.pred_ae = self.model.predict(adversarial_examples)
         self.y_ae = and_gen.get_y(adversarial_examples)
 
@@ -166,10 +160,12 @@ class AndGatePipeline:
         pred_miss = self.pred_ae[ind_misclassified]
         false_neg = len(pred_miss[pred_miss == 0])
         false_pos = len(pred_miss[pred_miss == 1])
-        print(f'Misclassified negative = {false_neg} ({false_neg/len(self.y_ae)*100:.4f}%)')
-        print(f'Misclassified positive = {false_pos} ({false_pos/len(self.y_ae)*100:.4f}%)')
+        print(
+            f'Misclassified negative = {false_neg} ({false_neg/len(self.y_ae)*100:.4f}%)')
+        print(
+            f'Misclassified positive = {false_pos} ({false_pos/len(self.y_ae)*100:.4f}%)')
 
-        count = len(matches[matches == False])
+        # count = len(matches[matches == False])
         print(f'Found {len(ind_misclassified)} Adversarial Examples out of '
               + f'{len(self.y_ae)}. {len(ind_misclassified) / len(self.y_ae) * 100.0:.4f}% '
               + 'successful rate')
@@ -187,7 +183,7 @@ class AndGatePipeline:
         plt.contourf(xx, yy, Z, cmap='coolwarm', alpha=0.6)
         plt.scatter(
             self.adversarial_examples[:, 0], self.adversarial_examples[:, 1],
-            c=self.pred_ae, marker='.', alpha=0.8, 
+            c=self.pred_ae, marker='.', alpha=0.8,
             cmap='coolwarm', s=8, edgecolor='face')
         plt.xlim(xlim[0], xlim[1])
         plt.ylim(ylim[0], ylim[1])
@@ -251,7 +247,7 @@ class AndGatePipeline:
         print(f'Pass rate = {pass_rate * 100:.4f}%')
 
         # Stage 3 - Decidability
-        print('\n---------- Decidability ----------------')        
+        print('\n---------- Decidability ----------------')
         model_knn = knn.KNeighborsClassifier(
             n_neighbors=k, n_jobs=-1, weights='distance')
         model_knn.fit(self.x_train, self.y_train)
@@ -287,11 +283,15 @@ class AndGatePipeline:
         print(f'Misclassified = {missclassified}')
 
         pred_miss = pred_after_ad[self.ind_misclassified]
-        false_neg = len(pred_miss[pred_miss==0])
-        false_pos = len(pred_miss[pred_miss==1])
+        false_neg = len(pred_miss[pred_miss == 0])
+        false_pos = len(pred_miss[pred_miss == 1])
         print(f'Misclassified negative = {false_neg} ({false_neg/len(y_passed)*100:.4f}%)')
         print(f'Misclassified positive = {false_pos} ({false_pos/len(y_passed)*100:.4f}%)')
-    
+
+        if verbose == 1:
+            for i in self.ind_misclassified:
+                print(f'[{x_ae[i][0]: .4f}, {x_ae[i][1]: .4f}] = {pred_after_ad[i]}; True y = {y_passed[i]}')
+
     def plot_after_ad(self, figsize, h, mesh_xlim, mesh_ylim, xlim, ylim):
         xx, yy = np.meshgrid(
             np.arange(mesh_xlim[0], mesh_xlim[1], h),
@@ -305,98 +305,12 @@ class AndGatePipeline:
 
         x_miss = self.x_passed_ad[self.ind_misclassified]
         y_miss = self.y_passed_ad[self.ind_misclassified]
+
         plt.scatter(
             x_miss[:, 0], x_miss[:, 1],
-            c=y_miss, marker='.', alpha=0.8, 
+            c=y_miss, marker='.', alpha=0.8,
             cmap='coolwarm', s=8, edgecolor='face')
         plt.xlim(xlim[0], xlim[1])
         plt.ylim(ylim[0], ylim[1])
         plt.title('Missclassified samples after AD')
         plt.show()
-
-
-# %%
-# Repeatable seed
-random_state = 2**12
-np.random.seed(seed=random_state)
-
-# %%
-# Prepare samples
-n = 2000
-scale = 0.06  # control how spread the blob is.
-centres = [
-    [0.25, 0.25],
-    [0.75, 0.25],
-    [0.25, 0.75],
-    [0.75, 0.75]]
-
-x = np.array([], dtype=np.float32)
-y = np.array([], dtype=np.int)
-for centre in centres:
-    temp_x, temp_y = and_gen.generate_logistic_samples(
-        n=int(n / len(centres)), threshold=0.5, centre=centre, scale=scale)
-    # numpy append func does NOT allow preallocate multi-dimensional array
-    if len(x) == 0:
-        x = temp_x
-    else:
-        x = np.append(x, temp_x, axis=0)
-    y = np.append(y, temp_y)
-x = x - 0.5
-shift = [[-0.5, -0.5]]
-
-# Parameters for Figure 1
-figsize = np.array(plt.rcParams["figure.figsize"]) * 2
-x_max = np.amax(x, axis=0) * 1.1
-x_min = np.amin(x, axis=0) * 1.1
-
-# Parameters for SVM
-gamma='scale'
-C=100
-
-# Parameters for Applicability Domain
-k = 9
-zeta0 = 2.2
-zeta1 = 1.5
-
-# %%
-and_gate_pipeline = AndGatePipeline(x, y)
-and_gate_pipeline.random_state = random_state
-
-# %%
-and_gate_pipeline.plot_data(
-    figsize=figsize, xlim=[x_min[0], x_max[0]], ylim=[x_min[1], x_max[1]])
-
-# %%
-# 80:20 split on training and test sets
-and_gate_pipeline.train_test_split(0.2)
-# %%
-and_gate_pipeline.fit_svm_model(gamma=gamma, C=C, shift=shift)
-
-# %%
-and_gate_pipeline.plot_prediction(
-    figsize, h=0.01, 
-    mesh_xlim=[x_min[0], x_max[0]], mesh_ylim=[x_min[1], x_max[1]], 
-    xlim=[x_min[0], x_max[0]], ylim=[x_min[1], x_max[1]])
-
-# %%
-and_gate_pipeline.model.get_params()
-
-# %%
-and_gate_pipeline.generate_adversarial_examples(epsilon=0.0006)
-
-# %%
-and_gate_pipeline.plot_adversarial_examples(
-    figsize, h=0.001,
-    mesh_xlim=[-0.1, 0.6], mesh_ylim=[-0.1, 0.6],
-    xlim=[-0.1, 0.6], ylim=[-0.1, 0.6])
-
-# %%
-and_gate_pipeline.run_applicability_domain(zeta0=zeta0, zeta1=zeta1, k=k)
-
-# %%
-and_gate_pipeline.plot_after_ad(
-    figsize, h=0.001,
-    mesh_xlim=[-0.1, 0.6], mesh_ylim=[-0.1, 0.6],
-    xlim=[-0.1, 0.6], ylim=[-0.1, 0.6])
-
-# %%

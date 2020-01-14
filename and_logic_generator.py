@@ -2,7 +2,7 @@
 import numpy as np
 
 # %%
-def get_y(x, threshold=0.5):
+def get_y(x, threshold=0.0):
     """
     Returns y based on AND logic. If x1 >= threshold and x2 >= threshold then 
     y = 1, else y = 0.

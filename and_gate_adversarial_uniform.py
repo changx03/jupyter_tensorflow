@@ -72,7 +72,7 @@ print(f'Accuracy on test set  = {score_test*100:.4f}%')
 
 # %%
 # Sanity check
-x_basis, y_basis = and_gen.get_basic_set()
+x_basis, y_basis = and_gen.get_basic_set(shift=[[-0.5, -0.5]])
 utils.run_basic_test(x_basis, y_basis, model_svm)
 
 # %%

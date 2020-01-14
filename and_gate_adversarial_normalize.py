@@ -44,6 +44,7 @@ plt.scatter(
 plt.grid(False)
 plt.xlim(x_min[0], x_max[0])
 plt.ylim(x_min[1], x_max[1])
+plt.title('Samples with true labels')
 plt.show()
 
 # %%
@@ -77,7 +78,7 @@ x_basis, y_basis = and_gen.get_basic_set(shift=[[-0.5, -0.5]], norms=[x_norms])
 utils.run_basic_test(x_basis, y_basis, model_svm)
 
 # %%
-h = .001
+h = .01 / np.average(x_norms)
 
 xx, yy = np.meshgrid(
     np.arange(x_min[0], x_max[0], h), 
@@ -92,6 +93,7 @@ plt.scatter(
     cmap='coolwarm', s=8, edgecolor='face')
 plt.xlim(x_min[0], x_max[0])
 plt.ylim(x_min[1], x_max[1])
+plt.title('Decision boundary on the test set')
 plt.show()
 
 # %%
@@ -117,7 +119,9 @@ print(f'Negative mean = [{mu_train_c0[0]:.4f}, {mu_train_c0[1]:.4f}]')
 # Generating Adversarial Examples from test set
 # This implementation uses multiple iterations to update x, until all of them
 # match the target classes.
-epsilon = 0.0006
+
+# scale down the parameter
+epsilon = 0.0006 / np.average(x_norms)
 
 adversarial_examples = np.copy(x_test)  # make a clone
 pred = pred_test
@@ -157,9 +161,14 @@ ind_misclassified = np.where(matches == False)[0]
 #         + f'{adversarial_examples[i][1]: .4f}] = {pred_ae[i]};'
 #         + f' True y = {y_ae[i]}')
 
-y_miss = y_ae[ind_misclassified]
-print(f'Misclassified positive = {len(y_miss[y_miss==1])}')
-print(f'Misclassified negative = {len(y_miss[y_miss==0])}')
+missclassified = len(ind_misclassified)
+print(f'Misclassified = {missclassified}')
+
+pred_miss = pred_ae[ind_misclassified]
+false_neg = len(pred_miss[pred_miss==0])
+false_pos = len(pred_miss[pred_miss==1])
+print(f'Misclassified negative = {false_neg} ({false_neg/len(y_ae)*100:.4f}%)')
+print(f'Misclassified positive = {false_pos} ({false_pos/len(y_ae)*100:.4f}%)')
 
 count = len(matches[matches==False])
 print(f'\nFound {len(ind_misclassified)} Adversarial Examples out of ' 
@@ -178,8 +187,9 @@ plt.contourf(xx, yy, Z, cmap='coolwarm', alpha=0.6)
 plt.scatter(
     adversarial_examples[:, 0], adversarial_examples[:, 1], 
     c=pred_ae, marker='.', alpha=0.8, cmap='coolwarm', s=8, edgecolor='face')
-plt.xlim(x_min[0], x_max[0])
-plt.ylim(x_min[1], x_max[1])
+plt.xlim(-0.01, 0.08)
+plt.ylim(-0.01, 0.08)
+plt.title('Generated Adversarial Examples')
 plt.show()
 
 # %%
@@ -286,18 +296,23 @@ ind_misclassified = np.where(matches == False)[0]
 
 print(f'\nOverall pass rate = {pass_rate * 100:.4f}%')
 print(f'Accuracy after AD = {score*100:.4f}%')
-print(f'{len(x_passed_s3)} out of {len(x_ae)}')
-print(f'Misclassified = {len(ind_misclassified)}')
-y_miss = y_passed[ind_misclassified]
-print(f'Misclassified positive = {len(y_miss[y_miss==1])}')
-print(f'Misclassified negative = {len(y_miss[y_miss==0])}')
-print()
+print(f'{len(x_passed_s3)} out of {len(x_ae)}\n')
 
-# for i in ind_misclassified:
-#     print(
-#         f'[{adversarial_examples[i][0]: .4f}, ' 
-#         + f'{adversarial_examples[i][1]: .4f}] = {pred_after_ad[i]};'
-#         + f' True y = {y_passed[i]}')
+missclassified = len(ind_misclassified)
+print(f'Misclassified = {missclassified}')
+
+pred_miss = pred_after_ad[ind_misclassified]
+false_neg = len(pred_miss[pred_miss==0])
+false_pos = len(pred_miss[pred_miss==1])
+print(f'Misclassified negative = {false_neg} ({false_neg/len(y_passed)*100:.4f}%)')
+print(f'Misclassified positive = {false_pos} ({false_pos/len(y_passed)*100:.4f}%)')
+
+# %%
+for i in ind_misclassified:
+    print(
+        f'[{adversarial_examples[i][0]: .4f}, ' 
+        + f'{adversarial_examples[i][1]: .4f}] Pred.: {pred_after_ad[i]},'
+        + f' Truth: {y_passed[i]}')
 
 # %%
 xx, yy = np.meshgrid(
@@ -308,12 +323,15 @@ Z = Z.reshape(xx.shape)
 
 plt.figure(figsize=figsize.tolist())
 plt.contourf(xx, yy, Z, cmap='coolwarm', alpha=0.6)
-plt.scatter(
-    x_passed_s3[:, 0], x_passed_s3[:, 1], 
-    c=y_passed, marker='.', alpha=0.8, cmap='coolwarm', s=8, edgecolor='face')
-plt.xlim(x_min[0], x_max[0])
-plt.ylim(x_min[1], x_max[1])
-plt.show()
 
+x_miss = x_passed_s3[ind_misclassified]
+y_miss = y_passed[ind_misclassified]
+plt.scatter(
+    x_miss[:, 0], x_miss[:, 1], 
+    c=y_miss, marker='.', alpha=0.8, cmap='coolwarm', s=8, edgecolor='face')
+plt.xlim(-0.01, 0.08)
+plt.ylim(-0.01, 0.08)
+plt.title('Missclassified sample after AD')
+plt.show()
 
 # %%

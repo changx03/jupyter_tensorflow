@@ -119,6 +119,7 @@ def print_blocked_samples(x, ind_passed):
 def run_basic_test(x, y, model):
     pred = model.predict(x)
     score_basis = accuracy_score(y, pred)
+    
     if score_basis == 1.0:
         print('Passed basic test')
     else:

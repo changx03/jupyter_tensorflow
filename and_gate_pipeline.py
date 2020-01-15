@@ -13,10 +13,11 @@ import applicability_domain as ad
 import adversarial_generator as adversarial
 
 
-class AndGatePipeline:
-    def __init__(self, x, y, random_state=None):
+class LogicGatePipeline:
+    def __init__(self, x, y, logic='and', random_state=None):
         self.x = x
         self.y = y
+        self.logic = logic
         if random_state is not None:
             self.random_state = random_state
 
@@ -35,6 +36,14 @@ class AndGatePipeline:
     @y.setter
     def y(self, y):
         self.__y = y
+
+    @property
+    def logic(self):
+        return self.__logic
+    
+    @logic.setter
+    def logic(self, logic):
+        self.__logic = logic
 
     @property
     def random_state(self):
@@ -91,7 +100,8 @@ class AndGatePipeline:
             print(f'Accuracy on train set = {score_train*100:.4f}%')
             print(f'Accuracy on test set  = {score_test*100:.4f}%')
 
-        x_basis, y_basis = and_gen.get_basic_set(shift=shift, norms=x_norms)
+        x_basis, y_basis = and_gen.get_basic_set(
+            shift=shift, norms=x_norms, logic=self.logic)
         utils.run_basic_test(x_basis, y_basis, self.model)
 
     def plot_prediction(
@@ -113,7 +123,7 @@ class AndGatePipeline:
         plt.title('Decision boundary on the test set')
         plt.show()
 
-    def generate_adversarial_examples(self, epsilon):
+    def generate_adversarial_examples(self, epsilon, max_epoch=2500):
         ind_train_c0 = np.where(self.y_train == 0)
         x_train_c0 = self.x_train[ind_train_c0]
         # y_train_c0 = np.zeros(len(x_train_c0))
@@ -132,7 +142,7 @@ class AndGatePipeline:
         targets = and_gen.get_not_y(self.y_test)
 
         epoch = 1
-        while np.array_equal(pred, targets) == False:
+        while np.array_equal(pred, targets) == False and epoch <= max_epoch:
             adversarial_examples = adversarial.moving_mean(
                 x=adversarial_examples,
                 y=pred,
@@ -149,7 +159,7 @@ class AndGatePipeline:
 
         # original_pred = self.model.predict(self.x_test)
         self.pred_ae = self.model.predict(adversarial_examples)
-        self.y_ae = and_gen.get_y(adversarial_examples)
+        self.y_ae = and_gen.get_y(adversarial_examples, logic=self.logic)
 
         matches = np.equal(self.y_ae, self.pred_ae)
         ind_misclassified = np.where(matches == False)[0]
@@ -260,7 +270,7 @@ class AndGatePipeline:
         print(f'Pass rate = {pass_rate * 100:.4f}%')
 
         self.x_passed_ad = x_passed_s3
-        self.y_passed_ad = and_gen.get_y(x_passed_s3)
+        self.y_passed_ad = and_gen.get_y(x_passed_s3, logic=self.logic)
 
         # Results
         print('\n---------- Results ---------------------')
@@ -269,7 +279,7 @@ class AndGatePipeline:
         print()
 
         pass_rate = utils.get_rate(x_passed_s3, x_ae)
-        y_passed = and_gen.get_y(x_passed_s3)
+        y_passed = and_gen.get_y(x_passed_s3, logic=self.logic)
         pred_after_ad = self.model.predict(x_passed_s3)
         score = accuracy_score(y_passed, pred_after_ad)
         matches = np.equal(y_passed, pred_after_ad)

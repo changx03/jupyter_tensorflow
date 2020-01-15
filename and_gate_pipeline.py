@@ -213,6 +213,10 @@ class LogicGatePipeline:
         # Print
         pass_rate = utils.get_rate(x_passed_s1, x_ae)
         print(f'Pass rate = {pass_rate * 100:.4f}%')
+        if pass_rate == 0:
+            self.x_passed_ad = np.array([], dtype=np.float32)
+            self.y_passed_ad = np.array([], dtype=np.int)
+            return
 
         # Stage 2 - Reliability
         print('\n---------- Reliability -----------------')
@@ -256,6 +260,11 @@ class LogicGatePipeline:
         pass_rate = utils.get_rate(x_passed_s2, x_passed_s1)
         print(f'Pass rate = {pass_rate * 100:.4f}%')
 
+        if pass_rate == 0:
+            self.x_passed_ad = np.array([], dtype=np.float32)
+            self.y_passed_ad = np.array([], dtype=np.int)
+            return
+
         # Stage 3 - Decidability
         print('\n---------- Decidability ----------------')
         model_knn = knn.KNeighborsClassifier(
@@ -268,6 +277,11 @@ class LogicGatePipeline:
         # Print
         pass_rate = utils.get_rate(x_passed_s3, x_passed_s2)
         print(f'Pass rate = {pass_rate * 100:.4f}%')
+
+        if pass_rate == 0:
+            self.x_passed_ad = np.array([], dtype=np.float32)
+            self.y_passed_ad = np.array([], dtype=np.int)
+            return
 
         self.x_passed_ad = x_passed_s3
         self.y_passed_ad = and_gen.get_y(x_passed_s3, logic=self.logic)

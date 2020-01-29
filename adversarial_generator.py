@@ -39,8 +39,9 @@ def moving_mean(x, y, targets, means, epsilon, epoch=None, verbose=0):
     
     # only compute the samples which haven't meet the target class
     # convert 1xn labels into nx2
-    tar_trans = np.transpose([targets[ind]])
-    tar_trans = np.hstack((tar_trans, tar_trans))
+    tar_trans = targets[ind]
+    n_features = x.shape[1]
+    tar_trans = np.repeat([tar_trans], n_features, axis=0).T
     
     # the opposite of tar_trans
     invert_tar_trans = np.logical_not(tar_trans)

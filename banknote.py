@@ -7,10 +7,13 @@ from sklearn import preprocessing
 from sklearn.model_selection import train_test_split
 from sklearn import svm
 from sklearn import metrics
+import sklearn.neighbors as knn
 
 import and_gate_pipeline as pipeline
 from and_logic_generator import get_not_y
 import adversarial_generator as adversarial
+import applicability_domain as ad
+import utils
 
 # %load_ext autoreload
 # %autoreload 2
@@ -125,5 +128,87 @@ df_ae = pd.DataFrame(data=np.column_stack((x_ae, y_test)),
     columns=['variance', 'skewness', 'curtosis', 'entropy', 'y-prime'])
 g = sns.PairGrid(df_ae)
 g.map(plt.scatter)
+
+# %%
+# Step 5: Test Applicability Domain
+# Xi are rescaled to [-1, 1], so the same zeta value should suit all Xi
+zeta = 0.4 
+k = 9
+
+# Stage 1 - Applicability
+print('\n---------- Applicability ---------------')
+x_passed_s1, ind_passed_s1 = ad.check_applicability(
+    x_ae, x_train, y_train)
+pred_passed_s1 = pred_ae[ind_passed_s1]
+
+# Print
+pass_rate = utils.get_rate(x_passed_s1, x_ae)
+print(f'Pass rate = {pass_rate * 100:.4f}%')
+if pass_rate == 0:
+    raise Exception('All samples are blocked by Applicability check')
+
+# Stage 2 - Reliability
+print('\n---------- Reliability -----------------')
+# Creating kNN models for each class
+ind_train_c0 = np.where(y_train == 0)
+model_knn_c0 = utils.unimodal_knn(x_train[ind_train_c0], k)
+
+ind_train_c1 = np.where(y_train == 1)
+model_knn_c1 = utils.unimodal_knn(x_train[ind_train_c1], k)
+
+# Computing mean, standard deviation and threshold
+mu_c0, sd_c0 = utils.get_distance_info(
+    model_knn_c0, x_train[ind_train_c0], k, seen_in_train_set=True)
+threshold_c0 = ad.get_reliability_threshold(mu_c0, sd_c0, zeta)
+
+mu_c1, sd_c1 = utils.get_distance_info(
+    model_knn_c1, x_train[ind_train_c1], k, seen_in_train_set=True)
+threshold_c1 = ad.get_reliability_threshold(mu_c1, sd_c1, zeta)
+
+x_passed_s2, ind_passed_s2 = ad.check_reliability(
+    x_passed_s1,
+    predictions=pred_passed_s1,
+    models=[model_knn_c0, model_knn_c1],
+    dist_thresholds=[threshold_c0, threshold_c1],
+    classes=[0, 1],
+    verbose=1
+)
+pred_passed_s2 = pred_passed_s1[ind_passed_s2]
+
+# Print
+print('Distance of c0 in training set:')
+print('{:18s} = {:.4f}'.format('Mean', mu_c0))
+print('{:18s} = {:.4f}'.format('Standard deviation', sd_c0))
+print('{:18s} = {:.4f}\n'.format('Threshold', threshold_c0))
+
+print('Distance of c1 in training set:')
+print('{:18s} = {:.4f}'.format('Mean', mu_c1))
+print('{:18s} = {:.4f}'.format('Standard deviation', sd_c1))
+print('{:18s} = {:.4f}\n'.format('Threshold', threshold_c1))
+
+pass_rate = utils.get_rate(x_passed_s2, x_passed_s1)
+print(f'Pass rate = {pass_rate * 100:.4f}%')
+
+if pass_rate == 0:
+    raise Exception('All samples are blocked by Reliability check')
+
+# Stage 3 - Decidability
+print('\n---------- Decidability ----------------')
+model_knn = knn.KNeighborsClassifier(
+    n_neighbors=k, n_jobs=-1, weights='distance')
+model_knn.fit(x_train, y_train)
+
+x_passed_s3, ind_passed_s3 = ad.check_decidability(
+    x_passed_s2, pred_passed_s2, model_knn)
+
+# Print
+pass_rate = utils.get_rate(x_passed_s3, x_passed_s2)
+print(f'Pass rate = {pass_rate * 100:.4f}%')
+
+if pass_rate == 0:
+    raise Exception('All samples are blocked by Decidability check')
+
+x_passed_ad = x_passed_s3
+
 
 # %%
